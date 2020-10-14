@@ -1,0 +1,329 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd 
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd  http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx-3.0.xsd ">
+
+	<description>Example configuration to get you started.</description>
+	
+	<!-- 订单支付信息业务处理 -->
+	<bean id="orderPayService" class="com.srnpr.xmaspay.service.impl.OrderPayServiceImpl" />
+	<!--支付网关配置信息-->
+	<bean id="payGateWayConfig" class="com.srnpr.xmaspay.config.PayGateWayConfig" />
+	
+	<!-- 支付网关业务实现类 -->
+	<bean id="payGateWayService" class="com.srnpr.xmaspay.service.impl.PayGateWayServiceImpl" />
+	
+	<!-- 交易取消日志记录 -->
+	<bean id="tradeCancelLogService" class="com.srnpr.xmaspay.service.impl.TradeCancelLogServiceImpl" />
+	
+	<!-- 支付网关请求解析 -->
+	<bean id="payGateWayProcess" class="com.srnpr.xmaspay.process.impl.PayGateWayProcess">
+		<property name="payService">
+			<ref bean="payGateWayService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="payGateWayConfig"/>
+		</property>
+	</bean>
+	<!-- 支付网关回调相关业务处理 -->
+	<bean id="payGateWayCallBackAspect" class="com.srnpr.xmaspay.aspect.impl.PayGateWayCallBackAspectImpl" />
+	<!-- 支付宝交易取消 -->
+	<bean id="alipayTradeCancelAspect" class="com.srnpr.xmaspay.aspect.impl.AlipayTradeCancelAspectImpl" />
+	<!-- 微信交易取消 -->
+	<bean id="wechatTradeCancelAspect" class="com.srnpr.xmaspay.aspect.impl.WechatTradeCancelAspectImpl" />
+	<!-- 支付网关请求相关业务处理 -->
+	<bean id="payGateWayAspect" class="com.srnpr.xmaspay.aspect.impl.PayGateWayAspectImpl" />
+	<!-- 支付网关回调配置信息 -->
+	<bean id="payGateWayCallBackConfig" class="com.srnpr.xmaspay.config.PayGateWayCallBackConfig" />
+	<!-- 支付网关回调业务实现 -->
+	<bean id="payGateWayCallBackService" class="com.srnpr.xmaspay.service.impl.PayGateWayCallBackServiceImpl" />
+	<!-- 支付网关回调解析 -->
+	<bean id="payGateWayCallBackProcess" class="com.srnpr.xmaspay.process.impl.PayGateWayCallBackProcess" >
+		<property name="payService">
+			<ref bean="payGateWayCallBackService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="payGateWayCallBackConfig"/>
+		</property>
+	</bean>
+	<!-- 支付网关回调切入 -->
+	<aop:config>
+		<aop:aspect ref="payGateWayCallBackAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.PayGateWayCallBackServiceImpl.doProcess(..))" id="payCallBackPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="payCallBackPointcut"/>
+			<aop:after method="doAfter" pointcut-ref="payCallBackPointcut"/>
+			<aop:around method="doAround" pointcut-ref="payCallBackPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	<!-- 支付网关请求切入 -->
+	<aop:config>
+		<aop:aspect ref="payGateWayAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.PayGateWayServiceImpl.doProcess(..))" id="payGateWayPointcut"/>
+			<aop:around method="doAround" pointcut-ref="payGateWayPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- 支付宝交易取消相关配置信息 -->
+	<bean id="alipayTradeCancelConfig" class="com.srnpr.xmaspay.config.AlipayTradeCancelConfig" />
+	
+	<!-- 支付宝交易取消业务实现-->
+	<bean id="alipayTradeCancelService" class="com.srnpr.xmaspay.service.impl.AlipayTradeCancelServiceImpl" />
+	
+	<!-- 支付宝交易取消配置信息 -->
+	<bean id="alipayTradeCancelProcess" class="com.srnpr.xmaspay.process.impl.AlipayTradeCancelProcess" >
+		<property name="payService">
+			<ref bean="alipayTradeCancelService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="alipayTradeCancelConfig"/>
+		</property>
+	</bean>
+	
+	<!-- 支付宝交易取消切面信息 -->
+	<aop:config>
+		<aop:aspect ref="alipayTradeCancelAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.AlipayTradeCancelServiceImpl.doProcess(..))" id="alipayTradeCacelPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="alipayTradeCacelPointcut"/>
+			<aop:around method="doAround" pointcut-ref="alipayTradeCacelPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- 微信交易取消相关配置信息 -->
+	<bean id="wechatTradeCancelConfig" class="com.srnpr.xmaspay.config.WechatTradeCancelConfig" />
+	
+	<!-- 微信交易取消业务实现-->
+	<bean id="wechatTradeCancelService" class="com.srnpr.xmaspay.service.impl.WechatTradeCancelServiceImpl" />
+	
+	<!-- 微信交易取消配置信息 -->
+	<bean id="wechatTradeCancelProcess" class="com.srnpr.xmaspay.process.impl.WechatTradeCancelProcess" >
+		<property name="payService">
+			<ref bean="wechatTradeCancelService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="wechatTradeCancelConfig"/>
+		</property>
+	</bean>
+	
+	<!-- 微信交易取消切面信息 -->
+	<aop:config>
+		<aop:aspect ref="wechatTradeCancelAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.WechatTradeCancelServiceImpl.doProcess(..))" id="wechatTradeCacelPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="wechatTradeCacelPointcut"/>
+			<aop:around method="doAround" pointcut-ref="wechatTradeCacelPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- 银联支付相关配置 begin -->
+	
+	<!--银联支付配置信息-->
+	<bean id="unionPayConfig" class="com.srnpr.xmaspay.config.UnionPayConfig" />
+	
+	<!-- 银联支付业务实现类 -->
+	<bean id="unionPayService" class="com.srnpr.xmaspay.service.impl.UnionPayServiceImpl" />
+	
+	<!-- 银联支付请求解析 -->
+	<bean id="unionPayProcess" class="com.srnpr.xmaspay.process.impl.UnionPayProcess">
+		<property name="payService">
+			<ref bean="unionPayService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="unionPayConfig"/>
+		</property>
+	</bean>
+	
+	<!-- 银联支付相关配置 end -->
+	
+	<!-- applePay相关配置 begin -->
+	
+	<!-- applePay配置信息-->
+	<bean id="applePayConfig" class="com.srnpr.xmaspay.config.ApplePayConfig" />
+	
+	<!-- applePay业务实现类 -->
+	<bean id="applePayService" class="com.srnpr.xmaspay.service.impl.ApplePayServiceImpl" />
+	
+	<!-- applePay请求解析 -->
+	<bean id="applePayProcess" class="com.srnpr.xmaspay.process.impl.ApplePayProcess">
+		<property name="payService">
+			<ref bean="applePayService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="applePayConfig"/>
+		</property>
+	</bean>
+	
+	<!-- applePay相关配置 end -->
+	
+	<!-- applePay支付回调相关配置 begin -->
+		
+	<!-- applePay支付回调业务实现类 -->
+	<bean id="applePayCallBackService" class="com.srnpr.xmaspay.service.impl.ApplePayCallBackServiceImpl" />
+	
+	<!-- applePay支付回调请求解析 -->
+	<bean id="applePayCallBackProcess" class="com.srnpr.xmaspay.process.impl.ApplePayCallBackProcess">
+		<property name="payService">
+			<ref bean="applePayCallBackService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="applePayConfig"/>
+		</property>
+	</bean>
+	
+	<!-- applePay支付回调相关配置 end -->
+	
+	<!-- 银联支付回调相关配置 begin -->
+		
+	<!-- 银联支付回调业务实现类 -->
+	<bean id="unionPayCallBackService" class="com.srnpr.xmaspay.service.impl.UnionPayCallBackServiceImpl" />
+	
+	<!-- 银联支付回调请求解析 -->
+	<bean id="unionPayCallBackProcess" class="com.srnpr.xmaspay.process.impl.UnionPayCallBackProcess">
+		<property name="payService">
+			<ref bean="unionPayCallBackService"/>
+		</property>
+		<property name="payConfig">
+			<ref bean="unionPayConfig"/>
+		</property>
+	</bean>
+	
+	<!-- 银联支付回调相关配置 end -->
+	
+	<!-- 银联支付回调切入 -->
+	<bean id="unionPayCallBackAspect" class="com.srnpr.xmaspay.aspect.impl.UnionPayCallBackAspectImpl" />	
+	<aop:config>
+		<aop:aspect ref="unionPayCallBackAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.UnionPayCallBackServiceImpl.doProcess(..))" id="unionPayCallBackPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="unionPayCallBackPointcut"/>
+			<aop:after method="doAfter" pointcut-ref="unionPayCallBackPointcut"/>
+			<aop:around method="doAround" pointcut-ref="unionPayCallBackPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- applePay支付回调切入 -->
+	<bean id="applePayCallBackAspect" class="com.srnpr.xmaspay.aspect.impl.ApplePayCallBackAspectImpl" />	
+	<aop:config>
+		<aop:aspect ref="applePayCallBackAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.ApplePayCallBackServiceImpl.doProcess(..))" id="applePayCallBackPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="applePayCallBackPointcut"/>
+			<aop:after method="doAfter" pointcut-ref="applePayCallBackPointcut"/>
+			<aop:around method="doAround" pointcut-ref="applePayCallBackPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- 微信通关日志记录 -->
+	<aop:config>
+		<aop:aspect ref="wechatCutomsAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.WechatCustomServiceImpl.doProcess(..))" id="wechatCustomPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="wechatCustomPointcut"/>
+			<aop:around method="doAround" pointcut-ref="wechatCustomPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<!-- 微信通关实现类 -->
+	<bean id="wechatCustomService" class="com.srnpr.xmaspay.service.impl.WechatCustomServiceImpl" />
+	
+	<bean id="wechatCustomConfig" class="com.srnpr.xmaspay.config.WechatCustomConfig" />
+	
+	<bean id="wechatCutomsAspect" class="com.srnpr.xmaspay.aspect.impl.WechatCutomsAspectImpl"/>
+	
+	<!-- 微信支付报关处理 -->
+	<bean id="wechatCustomProcess" class="com.srnpr.xmaspay.process.impl.WechatCustomProcess">
+		<property name="payService" ref="wechatCustomService"/>
+		<property name="payConfig" ref="wechatCustomConfig"/>
+		<property name="merchantCustomsConfig" ref="merchantCustomsConfig"/>
+	</bean>
+	
+	<!-- 商户报关配置 -->
+	<bean id="merchantCustomsConfig" class="com.srnpr.xmaspay.config.MerchantCustomsConfig"/>
+	
+	<!-- 支付宝报关相关配置  begin -->
+	<bean id="alipayCustomsService" class="com.srnpr.xmaspay.service.impl.AlipayCustomsServiceImpl" />
+	<bean id="alipayCustomsConfig" class="com.srnpr.xmaspay.config.AlipayCustomsConfig" />
+	<bean id="alipayCutomsAspect" class="com.srnpr.xmaspay.aspect.impl.AlipayCutomsAspectImpl"/>
+	<bean id="alipayCustomsProcess" class="com.srnpr.xmaspay.process.impl.AlipayCustomsProcess">
+		<property name="payService" ref="alipayCustomsService"/>
+		<property name="payConfig" ref="alipayCustomsConfig"/>
+		<property name="merchantCustomsConfig" ref="merchantCustomsConfig"/>
+	</bean>	
+	<aop:config>
+		<aop:aspect ref="alipayCutomsAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.service.impl.AlipayCustomsServiceImpl.doProcess(..))" id="alipayCustomsPointcut"/>
+			<aop:before method="doBefore" pointcut-ref="alipayCustomsPointcut"/>
+			<aop:around method="doAround" pointcut-ref="alipayCustomsPointcut"/>
+		</aop:aspect>
+	</aop:config>
+	<!-- 支付宝报关相关配置  end -->
+	
+	<!-- 报关实现统一入口 -->
+	<bean id="payCustomsProcess" class="com.srnpr.xmaspay.process.impl.PayCustomsProcess" >
+		<property name="merchantCustomsConfig" ref="merchantCustomsConfig"/>
+	</bean>
+	
+	<bean id="orderCustomsService" class="com.srnpr.xmaspay.service.impl.OrderCustomsServiceImpl"/>
+	
+	
+	<bean id="payService" class="com.srnpr.xmaspay.service.XmasPayService"/>
+	<bean id="abstractProcess" abstract="true">
+		<property name="payService" ref="payService"/>
+	</bean>
+	
+	<bean id="AlipayPreparePayProcess" class="com.srnpr.xmaspay.process.prepare.AlipayPreparePayProcess" parent="abstractProcess"/>
+	<bean id="ApplePayPreparePayProcess" class="com.srnpr.xmaspay.process.prepare.ApplePayPreparePayProcess" parent="abstractProcess"/>
+	<bean id="WechatPreparePayProcess" class="com.srnpr.xmaspay.process.prepare.WechatPreparePayProcess" parent="abstractProcess"/>
+	<bean id="UnionPreparePayProcess" class="com.srnpr.xmaspay.process.prepare.UnionPreparePayProcess" parent="abstractProcess"/>
+	<bean id="UnionFenqiPreparePayProcess" class="com.srnpr.xmaspay.process.prepare.UnionFenqiPreparePayProcess" parent="abstractProcess"/>
+	<bean id="VjmobiPayPreparePayProcess" class="com.srnpr.xmaspay.process.prepare.VjmobiPayPreparePayProcess" parent="abstractProcess"/>
+	
+	<bean id="ApplePayNotifyPayProcess" class="com.srnpr.xmaspay.process.notify.ApplePayNotifyPayProcess" parent="abstractProcess"/>
+	<bean id="PayGateNotifyPayProcess" class="com.srnpr.xmaspay.process.notify.PayGateNotifyPayProcess" parent="abstractProcess"/>
+	
+	<bean id="PayGateRefundReqProcess" class="com.srnpr.xmaspay.process.refund.PayGateRefundReqProcess" parent="abstractProcess"/>
+	<bean id="PayGateRefundNotifyProcess" class="com.srnpr.xmaspay.process.refund.PayGateRefundNotifyProcess" parent="abstractProcess"/>
+	
+	<bean id="ApplePayRefundReqProcess" class="com.srnpr.xmaspay.process.refund.ApplePayRefundReqProcess" parent="abstractProcess"/>
+	<bean id="WechatPrepareCashProcess" class="com.srnpr.xmaspay.process.prepare.WechatPrepareCashProcess" parent="abstractProcess"/>
+	
+	
+	<bean id="preparePayAspect" class="com.srnpr.xmaspay.aspect.PreparePayAspect" parent="abstractProcess"/>
+	<aop:config proxy-target-class="true">
+		<aop:aspect ref="preparePayAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.process.prepare.*.process(..))" id="preparePayPoint"/>
+			<aop:before method="doBefore" pointcut-ref="preparePayPoint"/>
+			<aop:after-returning method="doAfterReturn" pointcut-ref="preparePayPoint" returning="returnValue"/>
+			<aop:after-throwing method="doThrowing" pointcut-ref="preparePayPoint" throwing="e"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<bean id="notifyPayAspect" class="com.srnpr.xmaspay.aspect.NotifyPayAspect" parent="abstractProcess"/>
+	<aop:config proxy-target-class="true">
+		<aop:aspect ref="notifyPayAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.process.notify.*.process(..))" id="notifyPayPoint"/>
+			<aop:before method="doBefore" pointcut-ref="notifyPayPoint"/>
+			<aop:after-returning method="doAfterReturn" pointcut-ref="notifyPayPoint" returning="returnValue"/>
+			<aop:after-throwing method="doThrowing" pointcut-ref="notifyPayPoint" throwing="e"/>
+		</aop:aspect>
+	</aop:config>
+	
+	<bean id="refundNotifyPayAspect" class="com.srnpr.xmaspay.aspect.RefundNotifyPayAspect" parent="abstractProcess"/>
+	<aop:config proxy-target-class="true">
+		<aop:aspect ref="refundNotifyPayAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.process.refund.*NotifyProcess.process(..))" id="refundNotifyPayPoint"/>
+			<aop:before method="doBefore" pointcut-ref="refundNotifyPayPoint"/>
+			<aop:after-returning method="doAfterReturn" pointcut-ref="refundNotifyPayPoint" returning="returnValue"/>
+			<aop:after-throwing method="doThrowing" pointcut-ref="refundNotifyPayPoint" throwing="e"/>
+		</aop:aspect>
+	</aop:config>	
+	
+	<bean id="refundReqAspect" class="com.srnpr.xmaspay.aspect.RefundReqAspect" parent="abstractProcess"/>
+	<aop:config proxy-target-class="true">
+		<aop:aspect ref="refundReqAspect">
+			<aop:pointcut expression="execution(* com.srnpr.xmaspay.process.refund.*ReqProcess.process(..))" id="refundReqAspectPoint"/>
+			<aop:before method="doBefore" pointcut-ref="refundReqAspectPoint"/>
+			<aop:after-returning method="doAfterReturn" pointcut-ref="refundReqAspectPoint" returning="returnValue"/>
+			<aop:after-throwing method="doThrowing" pointcut-ref="refundReqAspectPoint" throwing="e"/>
+		</aop:aspect>
+	</aop:config>		
+</beans>
